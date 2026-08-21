@@ -51,7 +51,7 @@ def create_app() -> FastAPI:
     # Routers
     from app.routers import auth, api_keys, v1_events, sse, rules, ui
 
-    app.include_router(auth.router, prefix="/auth", tags=["auth"])
+    app.include_router(auth.router)
     app.include_router(api_keys.router, tags=["api-keys"])
     app.include_router(v1_events.router, prefix="/v1", tags=["v1"])
     app.include_router(sse.router, tags=["events"])

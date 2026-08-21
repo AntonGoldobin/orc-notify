@@ -27,6 +27,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    TypeDecorator,
     func,
 )
 from sqlalchemy.dialects.postgresql import CITEXT, UUID
@@ -38,6 +39,22 @@ if TYPE_CHECKING:
 
 class Base(DeclarativeBase):
     pass
+
+
+class CIText(TypeDecorator):
+    """CITEXT in Postgres, VARCHAR in SQLite (test fallback).
+
+    Email case-insensitivity matters in prod (Postgres citext extension). In
+    SQLite tests we rely on Pydantic EmailStr normalization for case handling.
+    """
+
+    impl = String
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(CITEXT())
+        return dialect.type_descriptor(String(255))
 
 
 def _uuid() -> uuid.UUID:
@@ -53,7 +70,7 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=_uuid
     )
-    email: Mapped[str] = mapped_column(CITEXT(), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(CIText(), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
