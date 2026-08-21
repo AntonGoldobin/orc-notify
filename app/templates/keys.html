@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}API keys{% endblock %}
+{% block content %}
+<h1>API keys</h1>
+<p class="muted">Each agent has a public <code>agent_id</code> and a private
+  <code>webhook_secret</code>. Sign your POSTs with HMAC-SHA256(secret, body)
+  and send <code>X-Notifier-Agent</code> + <code>X-Notifier-Signature</code>.</p>
+
+<section class="card">
+  <h2>Create agent</h2>
+  <form method="post" action="/keys/create">
+    <label>Name <input name="name" required maxlength="120" autofocus></label>
+    <button type="submit">Create</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Your agents</h2>
+  {% if agents %}
+  <table>
+    <thead><tr><th>agent_id</th><th>name</th><th>created</th><th>last event</th><th></th></tr></thead>
+    <tbody>
+      {% for a in agents %}
+      <tr>
+        <td><code>{{ a.agent_id }}</code></td>
+        <td>{{ a.name }}</td>
+        <td>{{ a.created_at|fmt_dt }}</td>
+        <td>{{ a.last_event_at|fmt_dt }}</td>
+        <td class="actions">
+          <form method="post" action="/keys/{{ a.agent_id }}/rotate" class="inline">
+            <button type="submit">Rotate secret</button>
+          </form>
+          <form method="post" action="/keys/{{ a.agent_id }}/delete" class="inline"
+                onsubmit="return confirm('Delete agent {{ a.agent_id }}? Past events are kept.')">
+            <button type="submit" class="danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No agents yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

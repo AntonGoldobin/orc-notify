@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ user.email if user else "orc-notify" }}{% endblock %} · orc-notify</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/htmx.min.js" defer></script>
+  <script src="/static/sse-client.js" defer></script>
+</head>
+<body>
+  {% if user %}
+  <header class="topbar">
+    <a href="/dashboard" class="brand">orc-notify</a>
+    <nav>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/keys">Keys</a>
+      <a href="/rules">Rules</a>
+      <a href="/settings">Settings</a>
+    </nav>
+    <span class="user-email">{{ user.email }}</span>
+    <form method="post" action="/auth/logout" class="inline">
+      <button class="link-btn" type="submit">Logout</button>
+    </form>
+  </header>
+  {% endif %}
+  <main>
+    {% if request.session.get("flash") %}
+    <div class="flash">{{ request.session.pop("flash") }}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

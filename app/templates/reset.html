@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Reset password{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Reset password</h1>
+  {% if token %}
+  <form method="post" action="/reset">
+    <input type="hidden" name="token" value="{{ token }}">
+    <label>New password <input name="new_password" type="password" required minlength="8" autofocus></label>
+    <button type="submit">Set new password</button>
+  </form>
+  {% else %}
+  <p class="muted">No token. Request a reset from
+    <code>POST /auth/reset-password</code> and follow the URL from your logs.</p>
+  {% endif %}
+</div>
+{% endblock %}

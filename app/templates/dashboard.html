@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Live feed</h1>
+<p class="muted">
+  Last {{ feed|length }} notifications. Live tail via SSE —
+  <a href="/rules">configure rules</a> to filter what you see.
+</p>
+<div id="feed">
+  {% for item in feed %}
+  <article class="event" data-id="{{ item.notification_id }}">
+    <header>
+      <span class="event-name">{{ item.event_name }}</span>
+      {% if item.rule_name %}<span class="rule">via {{ item.rule_name }}</span>{% endif %}
+      <span class="ts">{{ item.delivered_at|fmt_dt }}</span>
+    </header>
+    {% if item.summary %}<p>{{ item.summary }}</p>{% endif %}
+    <dl class="meta">
+      {% if item.project_name %}<dt>project</dt><dd>{{ item.project_name }}</dd>{% endif %}
+      {% if item.thread_id %}<dt>thread</dt><dd><code>{{ item.thread_id }}</code></dd>{% endif %}
+      {% if item.status %}<dt>status</dt><dd>{{ item.status }}</dd>{% endif %}
+      {% if item.pr_url %}<dt>PR</dt><dd><a href="{{ item.pr_url }}" target="_blank" rel="noopener">{{ item.pr_url }}</a></dd>{% endif %}
+    </dl>
+  </article>
+  {% else %}
+  <p class="muted">No events yet. Create an agent, then POST a signed event.</p>
+  {% endfor %}
+</div>
+{% endblock %}

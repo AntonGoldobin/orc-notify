@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Rules{% endblock %}
+{% block content %}
+<h1>Rules</h1>
+<p class="muted">A rule matches an event by its <code>event</code> field using a glob
+  (e.g. <code>thread.*</code> matches <code>thread.completed</code>).
+  <code>*</code> matches everything.</p>
+
+<section class="card">
+  <h2>Create rule</h2>
+  <form method="post" action="/rules/create">
+    <label>Name <input name="name" required maxlength="120" autofocus></label>
+    <label>Pattern <input name="event_pattern" required placeholder="thread.*" maxlength="255"></label>
+    <label class="inline"><input type="checkbox" name="enabled" checked> Enabled</label>
+    <button type="submit">Create</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Your rules</h2>
+  {% if rules %}
+  <table>
+    <thead><tr><th>name</th><th>pattern</th><th>enabled</th><th></th></tr></thead>
+    <tbody>
+      {% for r in rules %}
+      <tr>
+        <td>{{ r.name }}</td>
+        <td><code>{{ r.event_pattern }}</code></td>
+        <td>{{ "yes" if r.enabled else "no" }}</td>
+        <td class="actions">
+          <form method="post" action="/rules/{{ r.id }}/delete" class="inline"
+                onsubmit="return confirm('Delete rule {{ r.name }}?')">
+            <button type="submit" class="danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No rules. Without rules, events are persisted but not delivered.</p>
+  {% endif %}
+</section>
+{% endblock %}

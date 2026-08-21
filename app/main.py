@@ -10,6 +10,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import get_settings
 from app.db import dispose_engine, get_engine
@@ -43,6 +44,16 @@ def create_app() -> FastAPI:
         redoc_url=None,
     )
 
+    # Cookie-signed sessions for flash messages (UI). Same secret as JWT —
+    # saves us a second secret to manage in env.
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=settings.jwt_secret,
+        same_site=settings.cookie_samesite,
+        https_only=settings.cookie_secure,
+        max_age=settings.jwt_ttl_minutes * 60,
+    )
+
     # Static + templates — only mounted if dirs exist (allows tests to skip).
     static_dir = Path(__file__).parent / "static"
     if static_dir.exists():
@@ -56,7 +67,7 @@ def create_app() -> FastAPI:
     app.include_router(v1_events.router)
     app.include_router(sse.router)
     app.include_router(rules.router)
-    app.include_router(ui.router, tags=["ui"])
+    app.include_router(ui.router)
 
     @app.get("/healthz", tags=["health"])
     async def healthz() -> dict:

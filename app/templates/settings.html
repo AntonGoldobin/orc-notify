@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+
+<section class="card">
+  <h2>Account</h2>
+  <p>Signed in as <code>{{ user.email }}</code></p>
+  <p>User ID: <code>{{ user.id }}</code></p>
+  <p>Member since: {{ user.created_at|fmt_dt }}</p>
+</section>
+
+<section class="card">
+  <h2>Change password</h2>
+  <form method="post" action="/settings/password">
+    <label>Current password <input name="current_password" type="password" required></label>
+    <label>New password <input name="new_password" type="password" required minlength="8"></label>
+    <button type="submit">Update password</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Forgot password?</h2>
+  <p>There's no email delivery in v1. If you need a reset, run
+    <code>POST /auth/reset-password</code> from the API and capture the URL
+    from <code>docker logs</code>.</p>
+</section>
+{% endblock %}
