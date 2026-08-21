@@ -60,6 +60,12 @@ async def db_session(db_engine):
 @pytest_asyncio.fixture
 async def client(db_engine):
     """Async HTTP client wired to the FastAPI app with get_db overridden."""
+    # Clear cached Settings + Fernet so test-level monkeypatch.setenv takes effect
+    # (lru_cache reads env at first call, then holds the value forever).
+    from app.config import get_settings
+    from app.secrets import _fernet
+    get_settings.cache_clear()
+    _fernet.cache_clear()
 
     sessionmaker = async_sessionmaker(db_engine, expire_on_commit=False)
 
