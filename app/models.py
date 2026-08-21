@@ -57,6 +57,25 @@ class CIText(TypeDecorator):
         return dialect.type_descriptor(String(255))
 
 
+class BigIntAutoInc(TypeDecorator):
+    """BIGINT in Postgres, INTEGER in SQLite (test fallback).
+
+    SQLite's `INTEGER PRIMARY KEY` is a rowid alias and supports autoincrement;
+    `BIGINT PRIMARY KEY` does NOT — it's a regular column without auto-id.
+    This decorator keeps BIGINT semantics in prod while letting tests use
+    SQLite via metadata.create_all without manual sequence setup.
+    """
+
+    impl = BigInteger
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "sqlite":
+            from sqlalchemy import Integer
+            return dialect.type_descriptor(Integer())
+        return dialect.type_descriptor(BigInteger())
+
+
 def _uuid() -> uuid.UUID:
     return uuid.uuid4()
 
@@ -147,7 +166,7 @@ class Agent(Base):
 class Event(Base):
     __tablename__ = "events"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigIntAutoInc, primary_key=True, autoincrement=True)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -217,14 +236,14 @@ class Rule(Base):
 class InAppNotification(Base):
     __tablename__ = "in_app_notifications"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigIntAutoInc, primary_key=True, autoincrement=True)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
     event_id: Mapped[int] = mapped_column(
-        BigInteger,
+        BigIntAutoInc,
         ForeignKey("events.id", ondelete="CASCADE"),
         nullable=False,
     )
