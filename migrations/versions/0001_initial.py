@@ -90,7 +90,7 @@ def upgrade() -> None:
         ),
         sa.Column("name", sa.Text(), nullable=False),
         sa.Column("agent_id", sa.String(length=255), nullable=False, unique=True),
-        sa.Column("webhook_secret_hash", sa.Text(), nullable=False),
+        sa.Column("webhook_secret_ct", sa.Text(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),

@@ -28,6 +28,7 @@ dependencies = [
     "orjson>=3.10.0",
     "python-multipart>=0.0.9",
     "email-validator>=2.2.0",
+    "cryptography>=42.0.0",
 ]
 
 [project.optional-dependencies]

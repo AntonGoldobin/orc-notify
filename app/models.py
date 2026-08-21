@@ -127,8 +127,10 @@ class Agent(Base):
     name: Mapped[str] = mapped_column(Text, nullable=False)
     # Public identifier shared in HTTP headers (X-Notifier-Agent).
     agent_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    # bcrypt of webhook_secret used for HMAC. Raw secret only shown once at creation.
-    webhook_secret_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    # Fernet-encrypted webhook secret. Raw secret is shown exactly once on
+    # creation/rotation. We can't bcrypt-then-HMAC because bcrypt is too slow
+    # per-request (~50ms). Encryption at rest via app.config.webhook_secret_key.
+    webhook_secret_ct: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

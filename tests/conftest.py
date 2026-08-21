@@ -18,6 +18,11 @@ os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("JWT_SECRET", "test-secret-do-not-use-in-prod-please-32chars")
 os.environ.setdefault("COOKIE_SECURE", "false")
 os.environ.setdefault("JWT_TTL_MINUTES", "60")
+# Auto-generate a Fernet key for tests that need encryption. Modules that
+# want to test the "missing key" path must clear this via monkeypatch.
+from cryptography.fernet import Fernet as _Fernet  # noqa: E402
+
+os.environ.setdefault("WEBHOOK_SECRET_KEY", _Fernet.generate_key().decode())
 
 import pytest
 import pytest_asyncio

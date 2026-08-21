@@ -47,6 +47,16 @@ class Settings(BaseSettings):
     # Used to build password reset links like https://{public_base_url}/reset?token=...
     public_base_url: str = "http://localhost:8000"
 
+    # ── Webhook secret encryption ─────────────────────────────────
+    # Fernet key (44-char urlsafe-base64-encoded 32-byte key) used to encrypt
+    # agent webhook secrets at rest. Generate via:
+    #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    # Rotate by setting both old + new and re-encrypting rows.
+    webhook_secret_key: str = Field(
+        default="",
+        description="Fernet key for at-rest webhook secret encryption (44 chars)",
+    )
+
     # ── App metadata ──────────────────────────────────────────────
     app_name: str = "orc-notify"
     log_level: str = "INFO"
