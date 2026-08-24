@@ -10,11 +10,11 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # Docker requires lowercase repo names. GitHub repos keep their
-  # original case in `${{ github.repository }}` (e.g. `AntonGoldobin/orc-notify`)
-  # but Docker daemon rejects mixed-case on pull — force lowercase so
-  # CapRover can resolve the image from ghcr.io.
-  IMAGE_NAME: ${{ lower(github.repository_owner) }}/orc-notify
+  # Docker requires lowercase repo names. The GH repo is
+  # `AntonGoldobin/orc-notify` (mixed-case owner) but Docker daemon
+  # rejects that on pull — push under the lowercase `antongoldobin`
+  # owner so CapRover can resolve the image from ghcr.io.
+  IMAGE_NAME: antongoldobin/orc-notify
 
 jobs:
   build:
