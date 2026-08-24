@@ -14,12 +14,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy everything BEFORE pip install — pyproject.toml's setuptools build
+# needs to see the `app/` package directory to assemble the wheel.
 COPY pyproject.toml ./
-RUN pip install --upgrade pip && pip install .
-
 COPY app ./app
 COPY migrations ./migrations
 COPY alembic.ini ./
+
+RUN pip install --upgrade pip && pip install .
 
 # Run migrations then start uvicorn. Captain's port binding requires --host 0.0.0.0.
 CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
