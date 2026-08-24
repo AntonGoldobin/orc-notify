@@ -14,7 +14,7 @@ env:
   # original case in `${{ github.repository }}` (e.g. `AntonGoldobin/orc-notify`)
   # but Docker daemon rejects mixed-case on pull — force lowercase so
   # CapRover can resolve the image from ghcr.io.
-  IMAGE_NAME: ${{ github.repository_owner_lowercase }}/orc-notify
+  IMAGE_NAME: ${{ lower(github.repository_owner) }}/orc-notify
 
 jobs:
   build:
