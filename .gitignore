@@ -59,3 +59,10 @@ data/
 *.db
 *.sqlite
 *.sqlite3
+
+# Claude Code session (memory, plans, skills cache)
+.claude/
+
+# Skills pack caches (installed via `npx skills add`)
+.agents/skills/
+skills-lock.json
