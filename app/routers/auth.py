@@ -54,6 +54,11 @@ class ResetConfirmIn(BaseModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+class ChangePasswordIn(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 class UserOut(BaseModel):
     id: str
     email: str
@@ -205,3 +210,20 @@ async def reset_password_confirm(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="Invalid or expired reset token",
     )
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    body: ChangePasswordIn,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> Response:
+    """Authenticated password change. Requires the current password to confirm identity."""
+    if not verify_password(body.current_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect",
+        )
+    user.password_hash = hash_password(body.new_password)
+    await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
