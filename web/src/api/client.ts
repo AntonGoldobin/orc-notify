@@ -33,10 +33,14 @@ export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
   })
   if (!res.ok) {
     let detail: string | unknown
+    // Read body once as text; try JSON, then fall back to plain text / statusText.
+    // Reading .json() then .text() on the same Response in some runtimes returns
+    // empty for the second read, so we use .text() as the single source.
+    const bodyText = await res.text().catch(() => '')
     try {
-      detail = await res.json()
+      detail = bodyText ? JSON.parse(bodyText) : bodyText
     } catch {
-      detail = res.statusText
+      detail = bodyText || res.statusText || `HTTP ${res.status}`
     }
     throw new ApiError(res.status, detail)
   }
