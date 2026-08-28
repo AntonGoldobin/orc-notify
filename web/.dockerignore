@@ -26,7 +26,6 @@ test-results
 README.md
 Dockerfile
 .dockerignore
-nginx.conf
 captain-definition
 e2e
 *.test.ts
