@@ -1,0 +1,49 @@
+/*
+ * HeroUI v3 + Tailwind CSS v4 — order is load-bearing:
+ * 1) Tailwind v4 base + theme
+ * 2) HeroUI styles (defines --heroui-* tokens that Tailwind picks up)
+ * 3) our app-level dark theme override (data-app-theme="dark")
+ */
+
+@import 'tailwindcss';
+@import '@heroui/react/styles';
+
+@source "../node_modules/@heroui/react";
+
+/* App-level theme tokens. HeroUI reserves data-theme on <html>; we use data-app-theme. */
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
+  /* Default: light (HeroUI pinned to class="light" — see index.html). */
+  [data-app-theme='light'] {
+    color-scheme: light;
+  }
+
+  /* Dark: override the body bg + text. HeroUI's data-[theme=dark]: utilities cascade. */
+  [data-app-theme='dark'] {
+    color-scheme: dark;
+    --heroui-default-50: #0a0a0c;
+    --heroui-default-100: #14141a;
+    --heroui-default-200: #1c1c25;
+    --heroui-default-300: #2a2a36;
+    --heroui-default-foreground: #f5f3ef;
+    --heroui-background: #0a0a0c;
+    --heroui-foreground: #f5f3ef;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100svh;
+    background: var(--heroui-background, #ffffff);
+    color: var(--heroui-foreground, #11181c);
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100svh;
+  }
+}

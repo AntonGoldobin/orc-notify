@@ -219,3 +219,74 @@ async def test_reset_confirm_invalid_token_400(client):
         json={"token": "definitely-not-a-real-token-32chars-long", "new_password": "newpassword"},
     )
     assert r.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_change_password_round_trip(client):
+    """Authed user can change their password, then login with the new one."""
+    r = await client.post(
+        "/auth/register",
+        json={"email": "alice@example.com", "password": "oldpassword"},
+    )
+    assert r.status_code == 201
+
+    r2 = await client.post(
+        "/auth/change-password",
+        json={"current_password": "oldpassword", "new_password": "newpassword"},
+    )
+    assert r2.status_code == 204
+
+    # Old password no longer works.
+    client.cookies.clear()
+    r_fail = await client.post(
+        "/auth/login",
+        json={"email": "alice@example.com", "password": "oldpassword"},
+    )
+    assert r_fail.status_code == 401
+
+    # New password works.
+    r_ok = await client.post(
+        "/auth/login",
+        json={"email": "alice@example.com", "password": "newpassword"},
+    )
+    assert r_ok.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_change_password_wrong_current_401(client):
+    r = await client.post(
+        "/auth/register",
+        json={"email": "alice@example.com", "password": "rightpasswd"},
+    )
+    assert r.status_code == 201
+
+    r2 = await client.post(
+        "/auth/change-password",
+        json={"current_password": "wrongpasswd", "new_password": "newpassword"},
+    )
+    assert r2.status_code == 401
+    assert "incorrect" in r2.json()["detail"].lower()
+
+
+@pytest.mark.asyncio
+async def test_change_password_requires_auth_401(client):
+    """No cookie → cannot change password."""
+    r = await client.post(
+        "/auth/change-password",
+        json={"current_password": "anything", "new_password": "newpassword"},
+    )
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_change_password_short_new_422(client):
+    """New password must be ≥ 8 chars (Pydantic Field validation)."""
+    await client.post(
+        "/auth/register",
+        json={"email": "alice@example.com", "password": "oldpassword"},
+    )
+    r = await client.post(
+        "/auth/change-password",
+        json={"current_password": "oldpassword", "new_password": "short"},
+    )
+    assert r.status_code == 422

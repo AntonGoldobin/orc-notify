@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>orc-notify</title>
+    <!--
+      Pre-paint script: applies persisted theme before React mounts to avoid FOUC.
+      Reads localStorage 'app-theme' (light | dark | system) and sets data-app-theme
+      on <html>. HeroUI stays pinned to class="light" (we override its tokens via CSS
+      in src/index.css for the dark case).
+    -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('app-theme');
+          var resolved;
+          if (saved === 'system' || saved == null) {
+            resolved = window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+          } else {
+            resolved = saved;
+          }
+          document.documentElement.dataset.appTheme = resolved;
+        } catch (e) {
+          document.documentElement.dataset.appTheme = 'dark';
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
