@@ -33,7 +33,7 @@ RUN pnpm exec tsc -b && pnpm exec vite build
 # ── Stage 2: nginx ────────────────────────────────────────────────────────
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 # nginx:alpine default CMD is "nginx -g 'daemon off;'" — keep it.
