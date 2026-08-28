@@ -1,0 +1,35 @@
+# Build context for `docker build -f web/Dockerfile web`.
+# Everything below is excluded from the image build context.
+
+node_modules
+dist
+dist-ssr
+.vite
+*.local
+
+# Tests / fixtures
+coverage
+playwright-report
+test-results
+.playwright
+*.lcov
+
+# Editor + tooling cache
+.vscode/*
+!.vscode/extensions.json
+.idea
+.oxlintrc.cache
+
+# Git + docs
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+nginx.conf
+captain-definition
+e2e
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.test-d.ts
