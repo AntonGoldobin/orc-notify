@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.deps import cookie_settings, get_current_user, get_db
 from app.models import PasswordResetToken, User
+from app.schemas import UserOut
 from app.security import (
     hash_password,
     make_session_jwt,
@@ -59,20 +60,6 @@ class ChangePasswordIn(BaseModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
-class UserOut(BaseModel):
-    id: str
-    email: str
-    created_at: datetime
-
-    @classmethod
-    def from_user(cls, user: User) -> "UserOut":
-        return cls(
-            id=str(user.id),
-            email=user.email,
-            created_at=user.created_at,
-        )
-
-
 # ── Helpers ────────────────────────────────────────────────────────
 
 
@@ -84,7 +71,11 @@ def _set_session_cookie(response: Response, token: str) -> None:
 async def _issue_session(response: Response, user: User) -> UserOut:
     token, _expires = make_session_jwt(user.id)
     _set_session_cookie(response, token)
-    return UserOut.from_user(user)
+    return UserOut(
+        id=str(user.id),
+        email=user.email,
+        created_at=user.created_at,
+    )
 
 
 # ── Endpoints ──────────────────────────────────────────────────────
@@ -151,7 +142,11 @@ async def logout(response: Response) -> Response:
 
 @router.get("/me", response_model=UserOut)
 async def me(user: User = Depends(get_current_user)) -> UserOut:
-    return UserOut.from_user(user)
+    return UserOut(
+        id=str(user.id),
+        email=user.email,
+        created_at=user.created_at,
+    )
 
 
 @router.post("/reset-password", status_code=status.HTTP_202_ACCEPTED)

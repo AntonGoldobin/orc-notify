@@ -2,6 +2,8 @@
 
 - Passwords: passlib CryptContext with argon2id (OWASP-recommended).
 - Sessions: pyjwt HS256, signed with settings.jwt_secret, payload {sub: user_id}.
+- Topic keys: HMAC-SHA256 over `<timestamp>:<body>`, header `X-Notifier-Signature`,
+  matching ntfy.sh wire format. Constant-time compare.
 
 Why argon2 over bcrypt: argon2id wins the Password Hashing Competition (2015)
 and is resistant to GPU/ASIC attacks via memory-hardness. passlib lets us swap
@@ -9,6 +11,8 @@ to bcrypt or scrypt by changing one line if argon2 becomes problematic.
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -81,3 +85,38 @@ def decode_session_jwt(token: str) -> uuid.UUID | None:
         return uuid.UUID(sub)
     except ValueError:
         return None
+
+
+# ── Topic key verification (ntfy.sh HMAC semantics) ───────────────
+
+
+def compute_topic_signature(secret: str, body: bytes, timestamp: str) -> str:
+    """HMAC-SHA256 over `<timestamp>:<body>`, hex-encoded.
+
+    Matches ntfy.sh algorithm verbatim: signature = hmac_sha256(secret, f"{ts}:{body}").
+    Body MUST be the raw request bytes (not re-serialized JSON) so the sender
+    and receiver hash the same bytes.
+    """
+    msg = timestamp.encode("ascii") + b":" + body
+    return hmac.new(secret.encode(), msg, hashlib.sha256).hexdigest()
+
+
+def verify_bearer_topic_key(
+    secret: str,
+    body: bytes,
+    signature_header: str,
+    timestamp_header: str,
+) -> bool:
+    """Constant-time verify. Returns False on any decoding error.
+
+    Caller is responsible for enforcing timestamp freshness (ntfy uses ±5 min
+    window) — we only check the HMAC. Header values are read as-is; caller
+    decides whether to 401 on missing or stale timestamps.
+    """
+    if not signature_header or not timestamp_header:
+        return False
+    try:
+        expected = compute_topic_signature(secret, body, timestamp_header)
+        return hmac.compare_digest(expected, signature_header.lower())
+    except (AttributeError, TypeError):
+        return False

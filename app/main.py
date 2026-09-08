@@ -5,6 +5,7 @@ Health endpoint at /healthz — no auth, used by CapRover probes.
 """
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -14,6 +15,9 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import get_settings
 from app.db import dispose_engine, get_engine
+from app.services.prune import start_prune_task, stop_prune_task
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -26,12 +30,14 @@ async def lifespan(app: FastAPI):
             await conn.exec_driver_sql("SELECT 1")
     except Exception as exc:  # noqa: BLE001
         # Don't crash the app — log and let the first request surface it.
-        import logging
-        logging.getLogger(__name__).warning(
-            "orc-notify startup db check failed: %s", exc
-        )
-    yield
-    await dispose_engine()
+        logger.warning("orc-notify startup db check failed: %s", exc)
+    # Start the TTL prune background task.
+    start_prune_task(app)
+    try:
+        yield
+    finally:
+        await stop_prune_task(app)
+        await dispose_engine()
 
 
 def create_app() -> FastAPI:
@@ -59,15 +65,34 @@ def create_app() -> FastAPI:
     if static_dir.exists():
         app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-    # Routers
-    from app.routers import auth, api_keys, v1_events, sse, rules, ui
+    # Routers — order matters. Specific paths must register BEFORE the
+    # catch-all `POST /<topic>` (publish router). Same for `GET /<topic>/...`
+    # in subscribe. Existing routers all use multi-segment paths so they're
+    # naturally first.
+    from app.routers import (
+        api_keys,
+        auth,
+        publish,
+        rules,
+        sse,
+        subscribe,
+        topic_keys,
+        topics,
+        ui,
+        v1_events,
+    )
 
     app.include_router(auth.router)
     app.include_router(api_keys.router, tags=["api-keys"])
     app.include_router(v1_events.router)
     app.include_router(sse.router)
     app.include_router(rules.router)
+    app.include_router(topics.router)
+    app.include_router(topic_keys.router)
     app.include_router(ui.router)
+    # Catch-all topic routes registered last.
+    app.include_router(publish.router)
+    app.include_router(subscribe.router)
 
     @app.get("/healthz", tags=["health"])
     async def healthz() -> dict:

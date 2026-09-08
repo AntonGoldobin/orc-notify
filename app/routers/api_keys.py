@@ -25,36 +25,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.deps import get_current_user
 from app.models import Agent, User
+from app.schemas import AgentCreatedOut, AgentOut
 from app.secrets import SecretKeyError, encrypt_secret
 
 router = APIRouter(tags=["api-keys"])
 
 
 # ── Schemas ────────────────────────────────────────────────────────
-
-
-class AgentOut(BaseModel):
-    id: str
-    agent_id: str
-    name: str
-    created_at: datetime
-    last_event_at: datetime | None
-
-    @classmethod
-    def from_agent(cls, a: Agent) -> "AgentOut":
-        return cls(
-            id=str(a.id),
-            agent_id=a.agent_id,
-            name=a.name,
-            created_at=a.created_at,
-            last_event_at=a.last_event_at,
-        )
-
-
-class AgentCreatedOut(AgentOut):
-    """Returned exactly once on create/rotate — includes the raw webhook_secret."""
-
-    webhook_secret: str | None = None  # set by endpoint after from_agent()
 
 
 class AgentCreateIn(BaseModel):
@@ -132,6 +109,27 @@ async def _get_user_agent(db: AsyncSession, user: User, agent_id: str) -> Agent:
 # ── Endpoints ──────────────────────────────────────────────────────
 
 
+def _agent_to_out(a: Agent) -> AgentOut:
+    return AgentOut(
+        id=str(a.id),
+        agent_id=a.agent_id,
+        name=a.name,
+        created_at=a.created_at,
+        last_event_at=a.last_event_at,
+    )
+
+
+def _agent_to_created_out(a: Agent, secret: str) -> AgentCreatedOut:
+    return AgentCreatedOut(
+        id=str(a.id),
+        agent_id=a.agent_id,
+        name=a.name,
+        created_at=a.created_at,
+        last_event_at=a.last_event_at,
+        webhook_secret=secret,
+    )
+
+
 @router.get("/api/keys", response_model=list[AgentOut])
 async def list_agents(
     user: User = Depends(get_current_user),
@@ -142,7 +140,7 @@ async def list_agents(
         .where(Agent.user_id == user.id)
         .order_by(Agent.created_at.desc())
     )
-    return [AgentOut.from_agent(a) for a in rows.scalars().all()]
+    return [_agent_to_out(a) for a in rows.scalars().all()]
 
 
 @router.post(
@@ -181,9 +179,7 @@ async def create_agent(
             detail=f"agent_id '{chosen_agent_id}' is taken; please retry",
         )
     await db.refresh(agent)
-    out = AgentCreatedOut.from_agent(agent)
-    out.webhook_secret = raw_secret
-    return out
+    return _agent_to_created_out(agent, raw_secret)
 
 
 @router.delete("/api/keys/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -216,9 +212,7 @@ async def rotate_secret(
         )
     await db.commit()
     await db.refresh(agent)
-    out = AgentCreatedOut.from_agent(agent)
-    out.webhook_secret = raw_secret
-    return out
+    return _agent_to_created_out(agent, raw_secret)
 
 
 @router.get("/v1/agents/{agent_id}/health", response_model=HealthOut)
