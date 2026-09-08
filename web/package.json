@@ -16,17 +16,25 @@
     "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@heroui/react": "^3.2.4",
-    "@heroui/styles": "^3.2.4",
-    "@tailwindcss/postcss": "^4.3.3",
+    "@hookform/resolvers": "^3.10.0",
     "@tanstack/react-query": "^5.102.7",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.460.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-hook-form": "^7.54.0",
     "react-router-dom": "^7.18.2",
-    "tailwindcss": "^4"
+    "sonner": "^1.7.1",
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss": "^4.3.3",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
+    "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.6",

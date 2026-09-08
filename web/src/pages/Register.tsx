@@ -1,9 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Button, Card, Input, Label, Typography } from '@heroui/react'
-import { register } from '../api/auth'
-import { ApiError } from '../api/client'
-import { useAuth } from '../auth/AuthProvider'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { register } from '@/api/auth'
+import { ApiError } from '@/api/client'
+import { useAuth } from '@/auth/AuthProvider'
 
 export default function Register() {
   const [email, setEmail] = useState('')
@@ -24,7 +27,7 @@ export default function Register() {
     try {
       await register({ email, password })
       await refresh()
-      navigate('/dashboard', { replace: true })
+      navigate('/topics', { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setError('Email is already registered')
@@ -40,12 +43,12 @@ export default function Register() {
 
   return (
     <div className="flex items-center justify-center min-h-svh p-4">
-      <Card className="w-full max-w-sm p-6">
-        <Card.Header>
-          <Card.Title>Create account</Card.Title>
-          <Card.Description>Get an orc-notify account</Card.Description>
-        </Card.Header>
-        <Card.Content>
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Create account</CardTitle>
+          <CardDescription>Get an orc-notify account</CardDescription>
+        </CardHeader>
+        <CardContent>
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="email">Email</Label>
@@ -72,15 +75,15 @@ export default function Register() {
                 disabled={submitting}
               />
             </div>
-            {error && <Typography className="text-sm text-danger">{error}</Typography>}
-            <Button type="submit" variant="primary" isDisabled={submitting}>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" disabled={submitting}>
               {submitting ? 'Creating…' : 'Create account'}
             </Button>
-            <div className="text-sm text-default-600 text-center">
+            <div className="text-sm text-muted-foreground text-center">
               Already registered? <Link to="/login" className="text-primary hover:underline">Sign in</Link>
             </div>
           </form>
-        </Card.Content>
+        </CardContent>
       </Card>
     </div>
   )

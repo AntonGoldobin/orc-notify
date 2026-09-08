@@ -1,10 +1,16 @@
 /// <reference types="vitest" />
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
+import path from 'node:path'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     // Same-origin proxy → FastAPI backend. Backend has NO CORS middleware.
     // In production, the Captain app orc-notify-web will reverse_proxy these paths

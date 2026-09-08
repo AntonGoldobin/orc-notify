@@ -2,7 +2,11 @@
  * TypeScript shapes mirroring orc-notify backend Pydantic models.
  * Source: orc-notify/app/schemas.py + inline schemas in app/routers/*.py.
  * Keep in sync manually when backend changes.
+ *
+ * Topic / TopicKey / Message types are Phase 1 additions.
  */
+
+// ── Users ──────────────────────────────────────────────────────────────────
 
 export interface UserOut {
   id: string
@@ -34,29 +38,76 @@ export interface ChangePasswordIn {
   new_password: string
 }
 
-export interface AgentOut {
+// ── Topics (Phase 1) ──────────────────────────────────────────────────────
+
+export interface TopicIn {
+  name: string
+  description?: string | null
+  default_priority?: number | null
+  retention_days?: number | null
+}
+
+export interface TopicPatch {
+  description?: string | null
+  default_priority?: number | null
+  retention_days?: number | null
+}
+
+export interface TopicOut {
   id: string
-  agent_id: string
   name: string
+  description: string | null
+  default_priority: number
+  retention_days: number
   created_at: string
-  last_event_at: string | null
+  updated_at: string
 }
 
-export interface AgentCreateIn {
+// ── Topic keys (Phase 1) ──────────────────────────────────────────────────
+
+export interface TopicKeyIn {
   name: string
-  agent_id?: string
+  scopes?: string
 }
 
-export interface AgentCreatedOut extends AgentOut {
-  /** Returned ONCE on create/rotate. Never persisted client-side beyond a single view. */
-  webhook_secret: string | null
+export interface TopicKeyPatch {
+  name?: string | null
+  scopes?: string | null
 }
 
-export interface AgentHealthOut {
-  agent_id: string
-  last_event_at: string | null
-  status: string
+export interface TopicKeyOut {
+  id: string
+  topic_id: string
+  name: string
+  scopes: string
+  created_at: string
+  last_used_at: string | null
 }
+
+/** Returned exactly once on create / patch-with-rotation — secret is plaintext. */
+export interface TopicKeyCreatedOut extends TopicKeyOut {
+  secret: string | null
+}
+
+// ── Messages (Phase 1) ────────────────────────────────────────────────────
+
+/** ntfy.sh-compatible envelope served by `GET /{topic}/json`. */
+export interface MessageOut {
+  id: string
+  time: number
+  event: string
+  topic: string
+  title: string | null
+  message: string
+  priority: number
+  tags: string[]
+  click: string | null
+  icon: string | null
+  actions: Array<Record<string, unknown>> | null
+  content_type: string
+}
+
+// ── Legacy: Rules / Agents / Events (kept until Phase 5) ──────────────────
 
 export interface RuleIn {
   name: string
@@ -77,6 +128,29 @@ export interface RuleOut {
   updated_at: string
 }
 
+export interface AgentOut {
+  id: string
+  agent_id: string
+  name: string
+  created_at: string
+  last_event_at: string | null
+}
+
+export interface AgentCreateIn {
+  name: string
+  agent_id?: string
+}
+
+export interface AgentCreatedOut extends AgentOut {
+  webhook_secret: string | null
+}
+
+export interface AgentHealthOut {
+  agent_id: string
+  last_event_at: string | null
+  status: string
+}
+
 export interface HistoryOut {
   notification_id: number
   event_id: number
@@ -92,7 +166,6 @@ export interface HistoryOut {
   rule_name: string | null
 }
 
-/** SSE payload as actually emitted by the backend (field is `event`, not `event_name`). */
 export interface SseNotification {
   notification_id: number
   event_id: number
