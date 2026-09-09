@@ -251,6 +251,11 @@ function AddSoundDialog({
           <DialogDescription>Pick a built-in preset or add a custom URL.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-3">
+          {/* Built-in presets: save the sound in one click. The URL field
+              below is only relevant for custom (user-supplied) URLs where
+              `type="url"` validation is appropriate. Built-in sounds use
+              host-relative paths like `/sounds/chime.wav` that the browser's
+              URL validator rejects, so we save them directly here. */}
           <div className="flex flex-col gap-1.5">
             <Label>Built-in presets</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -259,11 +264,11 @@ function AddSoundDialog({
                   key={s.url}
                   type="button"
                   variant="outline"
+                  disabled={submitting}
                   onClick={() => {
                     unlockAudio()
-                    setName(s.name)
-                    setUrl(s.url)
                     playSound(s.url)
+                    void onSubmit({ name: s.name, url: s.url })
                   }}
                   className="justify-start"
                 >
