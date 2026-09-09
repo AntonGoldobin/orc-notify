@@ -57,6 +57,7 @@ def create_app() -> FastAPI:
         auth,
         publish,
         rules,
+        sounds,
         sse,
         subscribe,
         topic_keys,
@@ -69,6 +70,7 @@ def create_app() -> FastAPI:
     app.include_router(v1_events.router)
     app.include_router(sse.router)
     app.include_router(rules.router)
+    app.include_router(sounds.router)
     app.include_router(topics.router)
     app.include_router(topic_keys.router)
     # Catch-all topic routes registered last.

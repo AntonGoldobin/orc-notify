@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Bell, ChevronsUpDown, KeyRound, LogOut, Moon, Plus, Search, Settings, Sun, Zap } from 'lucide-react'
+import { Bell, BellOff, ChevronsUpDown, KeyRound, LogOut, Moon, Plus, Search, Settings, Sun, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
@@ -10,6 +10,8 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { Toaster } from '@/components/ui/sonner'
 import { useAuth } from '@/auth/AuthProvider'
 import { useTopics } from '@/hooks/useTopics'
+import { useGlobalSSE } from '@/hooks/useGlobalSSE'
+import { isMuted, setMuted, unlockAudio } from '@/lib/sounds'
 import { toast } from 'sonner'
 
 type Theme = 'light' | 'dark' | 'system'
@@ -75,6 +77,9 @@ function ThemeToggle() {
 function UserMenu() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  // Local mirrored state so the dropdown label re-renders after toggle without
+  // waiting for a remount.
+  const [muted, setMutedState] = React.useState<boolean>(() => isMuted())
   const onLogout = async () => {
     await logout()
     navigate('/login', { replace: true })
@@ -97,6 +102,18 @@ function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => navigate('/settings')}>
           <Settings className="h-4 w-4 mr-2" /> Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => {
+            // Unlock on the first user interaction so subsequent plays succeed.
+            unlockAudio()
+            const next = !muted
+            setMuted(next)
+            setMutedState(next)
+          }}
+        >
+          {muted ? <Bell className="h-4 w-4 mr-2" /> : <BellOff className="h-4 w-4 mr-2" />}
+          {muted ? 'Unmute sounds' : 'Mute sounds'}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onLogout}>
@@ -291,10 +308,20 @@ export function AppLayout() {
         </footer>
       </div>
 
+      <GlobalNotificationsBridge />
       <CommandPaletteOpener />
       <Toaster />
     </SidebarProvider>
   )
+}
+
+/**
+ * Invisible component that owns the global EventSource subscription.
+ * Mounted once per authed session, lives across route changes.
+ */
+function GlobalNotificationsBridge(): null {
+  useGlobalSSE()
+  return null
 }
 
 function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {

@@ -92,6 +92,32 @@ class HistoryOut(BaseModel):
     rule_name: str | None
 
 
+# ── Sounds (Phase 2) ──────────────────────────────────────────────
+
+
+class SoundIn(BaseModel):
+    """POST /api/sounds body."""
+
+    name: str = Field(min_length=1, max_length=120)
+    url: str = Field(min_length=1, max_length=2000)
+
+
+class SoundPatch(BaseModel):
+    """PATCH /api/sounds/{id} — partial update. Both fields optional."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    url: str | None = Field(default=None, min_length=1, max_length=2000)
+
+
+class SoundOut(BaseModel):
+    id: str
+    name: str
+    url: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # ── Topics (Phase 1) ──────────────────────────────────────────────
 
 
@@ -107,6 +133,7 @@ class TopicIn(BaseModel):
     description: str | None = Field(default=None, max_length=500)
     default_priority: int | None = Field(default=None, ge=1, le=5)
     retention_days: int | None = Field(default=None, ge=1, le=365)
+    sound_id: str | None = Field(default=None, description="Optional sound to attach.")
 
 
 class TopicPatch(BaseModel):
@@ -115,6 +142,9 @@ class TopicPatch(BaseModel):
     description: str | None = Field(default=None, max_length=500)
     default_priority: int | None = Field(default=None, ge=1, le=5)
     retention_days: int | None = Field(default=None, ge=1, le=365)
+    # None means "do not change". The handler distinguishes from explicit null
+    # via `body.model_fields_set` to support PATCH {"sound_id": null} (detach).
+    sound_id: str | None = Field(default=None, description="null detaches current sound.")
 
 
 class TopicOut(BaseModel):
@@ -125,6 +155,7 @@ class TopicOut(BaseModel):
     retention_days: int
     created_at: datetime
     updated_at: datetime
+    sound: SoundOut | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -186,6 +217,9 @@ class MessageOut(BaseModel):
     content_type: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ── Helpers ────────────────────────────────────────────────────────
 
 
 def parse_tags_csv(raw: str | None) -> list[str]:

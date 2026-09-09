@@ -29,10 +29,15 @@ class TopicMessage:
     """Plain dicts would also work; a dataclass documents the shape and
     survives schema drift via type checking. `payload` carries the MessageOut
     dict as constructed by the publish endpoint.
+
+    `topic_name` is the human-readable topic name — the SSE consumer
+    surfaces this so the SPA can route the alert to the right room/tab
+    without a second lookup.
     """
 
     topic_id: uuid.UUID
     payload: dict[str, Any]
+    topic_name: str = ""
 
 
 class TopicPubSub:

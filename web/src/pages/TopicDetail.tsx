@@ -16,6 +16,7 @@ void _Switch
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { SoundPicker } from '@/components/SoundPicker'
 import { useTopic, useUpdateTopic, useDeleteTopic } from '@/hooks/useTopics'
 import { useCreateTopicKey, useDeleteTopicKey, usePatchTopicKey, useTopicKeys } from '@/hooks/useTopicKeys'
 import { useLiveMessages, useMessages } from '@/hooks/useMessages'
@@ -410,6 +411,7 @@ function SettingsTab({
                   />
                 </div>
               </div>
+              {topic && <SoundPicker topicName={topic.name} currentSoundId={topic.sound?.id ?? null} />}
               <Button type="submit" disabled={saving}>
                 {saving ? 'Saving…' : 'Save'}
               </Button>

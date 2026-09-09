@@ -38,6 +38,25 @@ export interface ChangePasswordIn {
   new_password: string
 }
 
+// ── Sounds (per-topic notification sounds) ────────────────────────────────
+
+export interface SoundOut {
+  id: string
+  name: string
+  url: string
+  created_at: string
+}
+
+export interface SoundIn {
+  name: string
+  url: string
+}
+
+export interface SoundPatch {
+  name?: string | null
+  url?: string | null
+}
+
 // ── Topics (Phase 1) ──────────────────────────────────────────────────────
 
 export interface TopicIn {
@@ -45,12 +64,14 @@ export interface TopicIn {
   description?: string | null
   default_priority?: number | null
   retention_days?: number | null
+  sound_id?: string | null
 }
 
 export interface TopicPatch {
   description?: string | null
   default_priority?: number | null
   retention_days?: number | null
+  sound_id?: string | null
 }
 
 export interface TopicOut {
@@ -61,6 +82,7 @@ export interface TopicOut {
   retention_days: number
   created_at: string
   updated_at: string
+  sound: SoundOut | null
 }
 
 // ── Topic keys (Phase 1) ──────────────────────────────────────────────────
@@ -164,6 +186,8 @@ export interface HistoryOut {
   pr_url: string | null
   occurred_at: string | null
   rule_name: string | null
+  topic_id: string | null
+  topic_name: string | null
 }
 
 export interface SseNotification {
@@ -178,6 +202,8 @@ export interface SseNotification {
   status: string | null
   pr_url: string | null
   occurred_at: string | null
+  topic_id: string | null
+  topic_name: string | null
 }
 
 export interface SseReady {

@@ -1,6 +1,6 @@
 """SQLAlchemy 2.0 declarative models for orc-notify.
 
-8 tables:
+9 tables:
 - users (auth + account)
 - password_reset_tokens (one-time reset flow)
 - agents (per-user API keys; agent_id is the public identifier)
@@ -10,6 +10,7 @@
 - topics (ntfy-style pub/sub channels — Phase 1)
 - topic_keys (HMAC bearer credentials scoped to a topic — Phase 1)
 - messages (immutable log of published topic messages, TTL-pruned — Phase 1)
+- sounds (per-user notification-sound library; attachable to topics — Phase 2)
 
 Timestamps are TIMESTAMPTZ (Postgres-native). UUIDs as primary keys
 (via uuid_generate_v4 fallback to python-side uuid4).
@@ -331,6 +332,15 @@ class Topic(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    # Phase 2: optional notification sound. ON DELETE SET NULL — detaching
+    # a sound (or deleting it from the user's library) must not cascade-delete
+    # the topic.
+    sound_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("sounds.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    sound: Mapped["Sound | None"] = relationship()
 
     keys: Mapped[list["TopicKey"]] = relationship(
         back_populates="topic", cascade="all, delete-orphan"
@@ -343,6 +353,32 @@ class Topic(Base):
         Index("ix_topics_user_created", "user_id", "created_at"),
         UniqueConstraint("user_id", "name", name="uq_topics_user_name"),
     )
+
+
+class Sound(Base):
+    """A user-owned notification sound (URL to a playable audio asset).
+
+    Attached to at most one topic at a time (topic.sound_id is nullable FK).
+    Deleting a Sound sets topic.sound_id NULL via ON DELETE SET NULL.
+    """
+
+    __tablename__ = "sounds"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=_uuid
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    url: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (Index("ix_sounds_user", "user_id"),)
 
 
 class TopicKey(Base):
