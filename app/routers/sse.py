@@ -55,6 +55,10 @@ class HistoryOut(BaseModel):
     `notification_id` and `event_id` are stable positive ints derived from
     the v2 message id (uuid4 hex) so React list keys remain stable across
     history reloads.
+
+    Phase 2 additions: `topic_id` and `topic_name` let the SPA route the
+    notification to the correct room/tab without a second lookup. Both
+    default to None for backwards compatibility.
     """
 
     notification_id: int
@@ -69,6 +73,8 @@ class HistoryOut(BaseModel):
     pr_url: str | None
     occurred_at: datetime | None
     rule_name: str | None
+    topic_id: str | None = None
+    topic_name: str | None = None
 
 
 def _parse_since(s: str | None) -> datetime | None:
@@ -129,6 +135,8 @@ def _message_to_history(msg: Message, topic_name: str) -> HistoryOut:
         pr_url=msg.click,  # orchestrator sets click=pr_url
         occurred_at=ts,
         rule_name=None,
+        topic_id=str(msg.topic_id),
+        topic_name=topic_name,
     )
 
 
@@ -166,12 +174,16 @@ async def history(
 # ── Live SSE ───────────────────────────────────────────────────────
 
 
-def _payload_to_notification_dict(payload: dict[str, Any]) -> dict:
+def _payload_to_notification_dict(
+    payload: dict[str, Any], *, topic_id: str | None = None, topic_name: str | None = None
+) -> dict:
     """Project a v2 message payload (ntfy wire format) into HistoryOut shape.
 
     Same fields as `_message_to_history` but for live SSE events where the
     full Message row isn't available — only the already-serialized payload
-    that publish.py / pubsub_topics put on the wire.
+    that publish.py / pubsub_topics put on the wire. Phase 2: pass
+    topic_id/topic_name from the enclosing TopicMessage so the SPA can
+    route the alert to the right room without a second lookup.
     """
     tags = payload.get("tags") or []
     if isinstance(tags, str):
@@ -194,6 +206,8 @@ def _payload_to_notification_dict(payload: dict[str, Any]) -> dict:
         "status": _status_from_tags(tags),
         "pr_url": payload.get("click"),
         "occurred_at": ts.isoformat(),
+        "topic_id": topic_id,
+        "topic_name": topic_name or payload.get("topic"),
     }
 
 
@@ -239,7 +253,13 @@ async def _event_stream(
                 continue
             yield {
                 "event": "notification",
-                "data": orjson.dumps(_payload_to_notification_dict(tm.payload)).decode(),
+                "data": orjson.dumps(
+                    _payload_to_notification_dict(
+                        tm.payload,
+                        topic_id=str(tm.topic_id),
+                        topic_name=tm.topic_name or None,
+                    )
+                ).decode(),
             }
     finally:
         for fwd in forwarders:

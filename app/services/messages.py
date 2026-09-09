@@ -109,7 +109,10 @@ async def publish_message(
     # Fan-out (in-process; single-instance). Don't fail the publish on pubsub errors.
     pubsub = get_topic_pubsub()
     payload = message_to_payload(msg, topic_name=topic.name)
-    await pubsub.publish(topic.id, TopicMessage(topic_id=topic.id, payload=payload))
+    await pubsub.publish(
+        topic.id,
+        TopicMessage(topic_id=topic.id, payload=payload, topic_name=topic.name),
+    )
 
     return PublishResult(message=msg, topic=topic, created=True)
 

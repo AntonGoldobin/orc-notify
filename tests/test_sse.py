@@ -317,6 +317,31 @@ async def test_sse_payload_to_notification_dict_maps_v2_fields():
 
 
 @pytest.mark.asyncio
+async def test_sse_payload_to_notification_dict_includes_topic_identity():
+    """Phase 2: SSE notification payload must surface topic_id + topic_name
+    so the SPA can route the alert to the right room without a second lookup.
+    """
+    from app.routers.sse import _payload_to_notification_dict
+
+    payload = {
+        "id": "0123456789abcdef",
+        "time": 1735000000,
+        "event": "message",
+        "topic": "alerts",
+        "title": "deploy failed",
+        "message": "boom",
+        "priority": 5,
+        "tags": ["reelant", "thread-failed"],
+        "click": None,
+    }
+    out = _payload_to_notification_dict(
+        payload, topic_id="00000000-0000-0000-0000-000000000abc", topic_name="alerts"
+    )
+    assert out["topic_id"] == "00000000-0000-0000-0000-000000000abc"
+    assert out["topic_name"] == "alerts"
+
+
+@pytest.mark.asyncio
 async def test_sse_stable_int_id_is_deterministic_and_positive():
     """Same message id → same int; always positive (fits in 31-bit signed)."""
     from app.routers.sse import _stable_int_id

@@ -58,7 +58,13 @@ describe('events.subscribe()', () => {
       handle = subscribe((e) => received.push(e))
       const src = sources[0] as { __emit: (type: string, data?: unknown) => void }
       src.__emit('ready', { user_id: 'u1' })
-      src.__emit('notification', { notification_id: 1, event_id: 2, rule_id: 'r1', delivered_at: '2026-08-27T00:00:00Z', event: 'thread.completed', thread_id: null, project_name: null, summary: null, status: 'completed', pr_url: null, occurred_at: null })
+      src.__emit('notification', {
+        notification_id: 1, event_id: 2, rule_id: 'r1',
+        delivered_at: '2026-08-27T00:00:00Z', event: 'thread.completed',
+        thread_id: null, project_name: null, summary: null, status: 'completed',
+        pr_url: null, occurred_at: null,
+        topic_id: 't-abc', topic_name: 'alerts',
+      })
       src.__emit('ping')
     } finally {
       ;(globalThis as unknown as GlobalWithES).EventSource = RealEventSource
@@ -67,7 +73,9 @@ describe('events.subscribe()', () => {
 
     expect(received).toHaveLength(3)
     expect((received[0] as { type: string }).type).toBe('ready')
-    expect((received[1] as { type: string; data: { event: string } }).data.event).toBe('thread.completed')
+    expect((received[1] as { type: string; data: { event: string; topic_id: string; topic_name: string } }).data.event).toBe('thread.completed')
+    expect((received[1] as { type: string; data: { topic_id: string; topic_name: string } }).data.topic_id).toBe('t-abc')
+    expect((received[1] as { type: string; data: { topic_id: string; topic_name: string } }).data.topic_name).toBe('alerts')
     expect((received[2] as { type: string }).type).toBe('ping')
   })
 
