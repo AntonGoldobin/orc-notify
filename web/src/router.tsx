@@ -12,7 +12,7 @@ import Keys from './pages/Keys'
 import Settings from './pages/Settings'
 import Root from './pages/Root'
 import NotFound from './pages/NotFound'
-import LegacyDashboard from './pages/_legacy/Dashboard'
+import Gone from './pages/Gone'
 
 function ProtectedRoute() {
   const { status } = useAuth()
@@ -49,12 +49,13 @@ const routes: RouteObject[] = [
           { path: '/topics/:name/:tab', element: <TopicDetail /> },
           { path: '/keys', element: <Keys /> },
           { path: '/settings', element: <Settings /> },
-          // Legacy shim — keep /dashboard working until Phase 4 cutover.
-          { path: '/dashboard', element: <LegacyDashboard /> },
         ],
       },
     ],
   },
+  // Legacy paths from the Jinja2 UI — return 410 Gone with a link to /topics.
+  { path: '/dashboard', element: <Gone /> },
+  { path: '/rules', element: <Gone /> },
   { path: '*', element: <NotFound /> },
 ]
 

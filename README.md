@@ -7,7 +7,7 @@ Multi-tenant notification SaaS. Users register, create agents (API keys), and re
 - **Backend:** FastAPI 0.115 + SQLAlchemy 2.0 async + asyncpg + Alembic
 - **Auth:** passlib[argon2] + pyjwt (HS256) + HttpOnly Secure cookies
 - **Realtime:** sse-starlette
-- **Frontend:** Jinja2 + HTMX (no Node build pipeline)
+- **Frontend:** shadcn/ui SPA (React + Vite, served separately as `orc-notify-web`)
 - **DB:** Postgres 15 + `citext` extension
 
 ## Quick start (local dev)
