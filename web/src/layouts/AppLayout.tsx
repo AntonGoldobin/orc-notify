@@ -123,6 +123,25 @@ function SseStatus({ status }: SseStatusProps) {
   )
 }
 
+/**
+ * Footer SSE indicator — driven by window 'sse-status' events dispatched from
+ * TopicDetail's EventSource lifecycle (open on `ready` / `subscribe` start,
+ * closed on `error` / unmount). No context/provider — one tiny global side-
+ * channel, scoped to this layout.
+ */
+function FooterSseStatus() {
+  const [status, setStatus] = React.useState<'open' | 'closed'>('closed')
+  React.useEffect(() => {
+    const onStatus = (e: Event) => {
+      const next = (e as CustomEvent<'open' | 'closed'>).detail
+      setStatus(next === 'open' ? 'open' : 'closed')
+    }
+    window.addEventListener('sse-status', onStatus)
+    return () => window.removeEventListener('sse-status', onStatus)
+  }, [])
+  return <SseStatus status={status} />
+}
+
 function PaletteBody({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
   const { data: topics } = useTopics()
@@ -264,7 +283,7 @@ export function AppLayout() {
 
         <footer className="border-t px-4 py-2">
           <div className="flex items-center justify-between">
-            <SseStatus status="closed" />
+            <FooterSseStatus />
             <Badge variant="outline" className="font-mono text-[10px]">
               v3 · shadcn
             </Badge>

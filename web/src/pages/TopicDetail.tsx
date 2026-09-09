@@ -142,12 +142,23 @@ function MessagesTab({ topic }: { topic: string }) {
   const [connected, setConnected] = React.useState(false)
 
   React.useEffect(() => {
+    const emit = (s: 'open' | 'closed') =>
+      window.dispatchEvent(new CustomEvent('sse-status', { detail: s }))
+    emit('open')
     const handle = subscribeTopic(topic, (evt) => {
-      if (evt.type === 'ready') setConnected(true)
-      else if (evt.type === 'message') onLive(evt.data)
-      else if (evt.type === 'error') setConnected(false)
+      if (evt.type === 'ready') {
+        setConnected(true)
+        emit('open')
+      } else if (evt.type === 'message') onLive(evt.data)
+      else if (evt.type === 'error') {
+        setConnected(false)
+        emit('closed')
+      }
     })
-    return () => handle.close()
+    return () => {
+      handle.close()
+      emit('closed')
+    }
   }, [topic, onLive])
 
   return (

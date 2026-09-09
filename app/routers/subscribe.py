@@ -148,7 +148,7 @@ async def poll_json(
     q = select(Message).where(Message.topic_id == topic_obj.id)
     if since is not None:
         q = q.where(Message.time > since)
-    q = q.order_by(Message.time.asc()).limit(200)
+    q = q.order_by(Message.time.desc()).limit(200)
     rows = await db.execute(q)
     msgs = [message_to_payload(m, topic_name=topic_obj.name) for m in rows.scalars().all()]
     return Response(
@@ -213,7 +213,7 @@ async def poll_raw(
     q = select(Message).where(Message.topic_id == topic_obj.id)
     if since is not None:
         q = q.where(Message.time > since)
-    q = q.order_by(Message.time.asc()).limit(200)
+    q = q.order_by(Message.time.desc()).limit(200)
     rows = await db.execute(q)
 
     async def _gen() -> AsyncIterator[bytes]:

@@ -67,8 +67,9 @@ async def test_json_returns_published_messages(client):
     assert r.status_code == 200
     body = orjson.loads(r.content)
     assert len(body) == 2
-    assert body[0]["message"] == "hello"
-    assert body[1]["message"] == "world"
+    # /<topic>/json returns newest-first (Message.time DESC) — UX contract.
+    assert body[0]["message"] == "world"
+    assert body[1]["message"] == "hello"
 
 
 @pytest.mark.asyncio
@@ -231,8 +232,9 @@ async def test_raw_returns_messages(client):
     assert len(lines) == 2
     msg0 = orjson.loads(lines[0])
     msg1 = orjson.loads(lines[1])
-    assert msg0["message"] == "one"
-    assert msg1["message"] == "two"
+    # /<topic>/raw returns newest-first (Message.time DESC) — UX contract.
+    assert msg0["message"] == "two"
+    assert msg1["message"] == "one"
 
 
 @pytest.mark.asyncio
